@@ -3,8 +3,31 @@ from tkinter import ttk, messagebox
 from khorana_engine import khorana_report
 
 
+def read_float(entry, field_name, min_value, max_value, *, divisor=1.0):
+    raw = entry.get().strip().replace(',', '.')
+
+    try:
+        value = float(raw) / divisor
+    except ValueError:
+        messagebox.showerror(
+            'Ошибка ввода',
+            f'Введите корректное значение: {field_name}'
+        )
+        entry.focus_set()
+        return None
+
+    if not min_value <= value <= max_value:
+        messagebox.showerror(
+            'Ошибка ввода',
+            f'{field_name}, допустимый диапазон: {min_value}-{max_value}'
+        )
+        entry.focus_set()
+        return None
+
+    return value
+
+
 def report_craft():
-    global report
     cancer_site = localization_cmb.get()
     if not cancer_site:
         messagebox.showerror(
@@ -14,106 +37,29 @@ def report_craft():
         localization_cmb.focus_set()
         return
 
-    platelets = platelets_entry.get().strip()
-    try:
-        platelets = int(float(platelets.replace(',', '.')))
-    except ValueError:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Введите количество тромбоцитов!'
-        )
-        platelets_entry.focus_set()
-        return
-    if not 0 <= platelets <= 2000:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message=(
-                'Количество тромбоцитов выходит '
-                'за допустимый диапазон (0-2000)'
-            )
-        )
-        platelets_entry.focus_set()
+    platelets = read_float(platelets_entry, 'Тромбоциты, х 10^9/кл', 0, 2000)
+    if platelets is None:
         return
 
-    hemoglobin = hemoglobin_entry.get().strip()
-    try:
-        hemoglobin = int(float(hemoglobin.replace(',', '.')))
-    except ValueError:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Введите концентрацию гемоглобина!'
-        )
-        hemoglobin_entry.focus_set()
-        return
-    if not 0 <= hemoglobin <= 200:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message=(
-                'Концентрация гемоглобина выходит '
-                'за пределы допустимых значений (0-200)!'
-            )
-        )
-        hemoglobin_entry.focus_set()
+    hemoglobin = read_float(hemoglobin_entry, 'Гемоглобин, г/л', 0, 300)
+    if hemoglobin is None:
         return
 
     epoetin = epoetin_var.get()
 
-    leukocytes = leukocytes_entry.get().strip()
-    try:
-        leukocytes = round(float(leukocytes.replace(',', '.')), 2)
-    except ValueError:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Введите количество лейкоцитов'
-        )
-        leukocytes_entry.focus_set()
-        return
-    if not 0 <= leukocytes <= 200:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message=(
-                'Количтво лейкоцитов выходит '
-                'за пределы допустимых значений (0-200)!'
-            )
-        )
-        leukocytes_entry.focus_set()
+    leukocytes = read_float(leukocytes_entry, 'Лейкоциты, х 10^9/кл', 0, 200)
+    if leukocytes is None:
         return
 
-    try:
-        height = round(float(height_entry.get()) / 100, 2)
-    except ValueError:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Введите рост пациента!'
-        )
-        height_entry.focus_set()
-        return
-    if not 0.5 <= height <= 2.5:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Рост пациента выходит за допустимый диапазон (0.5-2.5 м)!'
-        )
-        height_entry.focus_set()
+    height = read_float(height_entry, 'Рост, см', 50, 250)
+    if height is None:
         return
 
-    try:
-        weight = round(float(weight_entry.get()), 2)
-    except ValueError:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Введите вес пациента!'
-        )
-        weight_entry.focus_set()
-        return
-    if not 20 <= weight <= 300:
-        messagebox.showerror(
-            title='Ошибка ввода',
-            message='Вес пациента выходит за допустимый диапазон (20-300 кг)!'
-        )
-        weight_entry.focus_set()
+    weight = read_float(weight_entry, 'Вес, кг', 20, 300)
+    if weight is None:
         return
 
-    bmi = round((weight / height ** 2), 2)
+    bmi = weight / (height / 100) ** 2
 
     report = khorana_report(
         cancer_site,
@@ -148,8 +94,6 @@ def copy_report():
     )
 
 
-report = ''
-
 root = tk.Tk()
 root.title('Расчёт шкалы Khorana')
 root.geometry('500x215')
@@ -181,7 +125,7 @@ platelets_entry.place(x=300, y=55)
 
 hemoglobin_label = tk.Label(text=(
     '3. Концентрация гемоглобина:'
-    '                                                     * 10^9/л'
+    '                                                     * г/л'
 ))
 hemoglobin_label.place(x=10, y=80)
 
@@ -191,7 +135,7 @@ hemoglobin_entry.place(x=300, y=80)
 epoetin_var = tk.BooleanVar(value=False)
 
 epoetin_checkbutton = ttk.Checkbutton(
-    text='Использование эритропоэтина',
+    text='Применение эритропоэз-стимулирующего препарата (ЭСП)',
     variable=epoetin_var,
 )
 epoetin_checkbutton.place(x=20, y=105)
@@ -225,7 +169,7 @@ main_button = tk.Button(
 )
 main_button.place(x=150, y=160)
 
-report_label = tk.Label(text=report, justify='left', anchor='nw')
+report_label = tk.Label(text='', justify='left', anchor='nw')
 report_label.place(x=10, y=210)
 
 disclaimer = tk.Label(
@@ -256,10 +200,22 @@ copy_button = tk.Button(
 copy_button.place(x=500, y=160)
 
 copyright_label = tk.Label(
-    text='© 2026 Жихорев Р. С. | Версия 1.0.0 | Сборка от 14.08.2026',
+    text='© 2026 Жихорев Р. С. | Версия 1.1.0 | Сборка от 15.08.2026',
     font=('Segoe UI', 7),
     fg='gray'
 )
-copyright_label.place(x=280, y=320)
+copyright_label.place(x=520, y=320)
+
+source_label = tk.Label(
+    root,
+    text=(
+        "Источник шкалы: Khorana et al., Blood, 2008; 111(10):4902–4907."
+    ),
+    justify="left",
+    anchor="w",
+    font=("Segoe UI", 7),
+    fg="gray",
+)
+source_label.place(x=10, y=320)
 
 root.mainloop()
