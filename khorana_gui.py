@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from khorana_engine import khorana_report
+from constants import APP_VERSION, BUILD_DATE
 
 
 def read_float(entry, field_name, min_value, max_value, *, divisor=1.0):
@@ -200,7 +201,10 @@ copy_button = tk.Button(
 copy_button.place(x=500, y=160)
 
 copyright_label = tk.Label(
-    text='© 2026 Жихорев Р. С. | Версия 1.1.0 | Сборка от 15.08.2026',
+    text=(
+        '© 2026 Жихорев Р. С. '
+        f'| Версия {APP_VERSION} | Сборка от {BUILD_DATE}'
+        ),
     font=('Segoe UI', 7),
     fg='gray'
 )
